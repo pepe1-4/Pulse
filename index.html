@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1020" />
+  <meta name="description" content="מעקב אישי חכם אחרי הרגלים, צריכה ומגמות לאורך זמן." />
+  <link rel="manifest" href="manifest.json?v=4" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <title>Pulse — המעקב שלי</title>
+  <style>
+    :root{
+      --bg:#08111f;
+      --surface:#0f1b2e;
+      --surface2:#14233a;
+      --surface3:#1a2d48;
+      --text:#f8fafc;
+      --muted:#8fa3bf;
+      --line:rgba(255,255,255,.08);
+      --green:#22c55e;
+      --greenSoft:rgba(34,197,94,.14);
+      --red:#fb7185;
+      --redSoft:rgba(251,113,133,.14);
+      --violet:#a78bfa;
+      --violetSoft:rgba(167,139,250,.14);
+      --cyan:#22d3ee;
+      --orange:#fb923c;
+      --shadow:0 18px 50px rgba(0,0,0,.28);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    html{background:var(--bg)}
+    body{
+      margin:0;
+      min-height:100vh;
+      color:var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(34,211,238,.08), transparent 28%),
+        radial-gradient(circle at top left, rgba(167,139,250,.08), transparent 24%),
+        var(--bg);
+      font-family:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+    }
+    button,input,select{font:inherit}
+    button{touch-action:manipulation}
+    .app{max-width:860px;margin:auto;padding:14px 12px 102px}
+    .page{display:none}.page.active{display:block}
+    .top{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px
+    }
+    .brand{display:flex;align-items:center;gap:10px}
+    .logo{
+      width:36px;height:36px;border-radius:12px;display:grid;place-items:center;
+      background:linear-gradient(135deg,var(--cyan),var(--violet));color:#06101c;font-weight:950;
+      box-shadow:0 8px 24px rgba(34,211,238,.2)
+    }
+    .brand h1{font-size:1.05rem;margin:0;font-weight:900}
+    .brand small{display:block;color:var(--muted);font-size:.72rem;margin-top:1px}
+    .clock{text-align:left}
+    .clock strong{display:block;font-size:.92rem}
+    .clock span{color:var(--muted);font-size:.72rem}
+    .date-strip{
+      display:flex;align-items:center;justify-content:space-between;gap:8px;
+      background:rgba(255,255,255,.035);border:1px solid var(--line);
+      border-radius:14px;padding:7px 9px;margin-bottom:14px
+    }
+    .date-main{font-weight:800;font-size:.84rem}
+    .date-sub{color:var(--muted);font-size:.7rem}
+    .icon-btn{
+      width:34px;height:34px;border:0;border-radius:10px;background:var(--surface2);color:var(--text);cursor:pointer
+    }
+    .section-head{display:flex;align-items:end;justify-content:space-between;margin:18px 2px 8px}
+    .section-head h2{font-size:.92rem;margin:0;font-weight:900}
+    .section-head span{font-size:.68rem;color:var(--muted)}
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+    .habit{
+      border:1px solid var(--line);background:linear-gradient(180deg,var(--surface),#0c1728);
+      border-radius:16px;padding:10px;min-height:104px;box-shadow:var(--shadow);position:relative;overflow:hidden
+    }
+    .habit::after{
+      content:"";position:absolute;inset:auto -20px -30px auto;width:70px;height:70px;border-radius:50%;
+      background:var(--tone,rgba(255,255,255,.05));filter:blur(4px)
+    }
+    .habit.good{--tone:rgba(34,197,94,.12)}
+    .habit.bad{--tone:rgba(251,113,133,.12)}
+    .habit.mood{--tone:rgba(167,139,250,.14)}
+    .habit-top{display:flex;justify-content:space-between;gap:6px;position:relative;z-index:1}
+    .habit-name{font-size:.78rem;font-weight:850;line-height:1.15}
+    .emoji{font-size:1.25rem}
+    .metric{font-size:1.25rem;font-weight:950;margin-top:7px;position:relative;z-index:1}
+    .sub{font-size:.62rem;color:var(--muted);min-height:14px;position:relative;z-index:1}
+    .actions{display:flex;gap:6px;margin-top:7px;position:relative;z-index:1}
+    .main-action,.minus{
+      border:0;border-radius:10px;height:34px;cursor:pointer;font-weight:900
+    }
+    .main-action{flex:1;background:#edf2f7;color:#07111e}
+    .habit.good .main-action{background:var(--green);color:#04130a}
+    .habit.bad .main-action{background:var(--red);color:#21060c}
+    .habit.mood .main-action{background:var(--violet);color:#100520}
+    .minus{width:34px;background:var(--surface3);color:var(--text)}
+    .progress{height:4px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden;margin-top:7px}
+    .progress i{display:block;height:100%;width:0;background:var(--cyan)}
+    .boolean-btn{
+      width:100%;border:0;border-radius:10px;height:34px;margin-top:8px;cursor:pointer;font-weight:900;
+      background:var(--surface3);color:var(--muted)
+    }
+    .boolean-btn.done{background:var(--green);color:#04130a}
+    .split{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+    .split button,.mood-scale button{
+      border:0;border-radius:10px;padding:8px 4px;background:var(--surface3);color:var(--muted);cursor:pointer;font-weight:850
+    }
+    .split button.active,.mood-scale button.active{background:var(--violet);color:white}
+    .mood-scale{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:8px}
+    .add-card{
+      grid-column:1/-1;min-height:64px;border:1px dashed rgba(255,255,255,.18);
+      background:rgba(255,255,255,.02);box-shadow:none;display:grid;place-items:center;color:var(--muted);
+      cursor:pointer;font-weight:850
+    }
+    .bottom-nav{
+      position:fixed;left:0;right:0;bottom:0;z-index:30;
+      background:rgba(8,17,31,.88);backdrop-filter:blur(18px);border-top:1px solid var(--line);
+      padding:8px 10px calc(8px + env(safe-area-inset-bottom))
+    }
+    .bottom-inner{max-width:860px;margin:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+    .nav-btn{
+      border:0;border-radius:12px;padding:9px 6px;background:transparent;color:var(--muted);font-weight:850;cursor:pointer
+    }
+    .nav-btn.active{background:var(--surface2);color:var(--text)}
+    .panel{
+      background:linear-gradient(180deg,var(--surface),#0c1728);border:1px solid var(--line);
+      border-radius:18px;padding:12px;box-shadow:var(--shadow);margin-bottom:10px
+    }
+    .controls{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    label{display:block;color:var(--muted);font-size:.68rem;margin-bottom:5px}
+    select,input{
+      width:100%;border:1px solid var(--line);background:var(--surface2);color:var(--text);
+      border-radius:11px;padding:10px
+    }
+    .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    .kpi{padding:11px;background:rgba(255,255,255,.025);border:1px solid var(--line);border-radius:14px}
+    .kpi span{display:block;color:var(--muted);font-size:.65rem}
+    .kpi b{display:block;font-size:1.08rem;margin-top:3px}
+    .chart-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .chart-title h3{font-size:.86rem;margin:0}
+    .chart-title span{font-size:.66rem;color:var(--muted)}
+    .trend-chart{display:flex;align-items:end;gap:4px;height:150px;padding-top:10px}
+    .trend-col{flex:1;min-width:4px;display:flex;flex-direction:column;justify-content:end;align-items:center;gap:4px}
+    .trend-bar{width:100%;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,var(--cyan),var(--violet));min-height:2px}
+    .trend-label{font-size:.52rem;color:var(--muted);writing-mode:vertical-rl;transform:rotate(180deg);max-height:34px;overflow:hidden}
+    .hour-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:4px}
+    .hour-cell{
+      aspect-ratio:1;border-radius:7px;background:rgba(255,255,255,.04);display:grid;place-items:center;
+      color:var(--muted);font-size:.55rem;position:relative;overflow:hidden
+    }
+    .hour-cell i{position:absolute;inset:auto 0 0;height:0;background:linear-gradient(180deg,var(--cyan),var(--violet));opacity:.9}
+    .hour-cell span{position:relative;z-index:1}
+    .list{display:flex;flex-direction:column;gap:7px}
+    .list-row{display:flex;align-items:center;gap:8px;padding:9px;border:1px solid var(--line);border-radius:12px}
+    .list-row .grow{flex:1}
+    .list-row b{font-size:.78rem}
+    .list-row small{display:block;color:var(--muted);font-size:.64rem}
+    .pill{font-size:.62rem;padding:5px 7px;border-radius:999px;background:var(--surface3);color:var(--muted)}
+    .btn-row{display:flex;flex-wrap:wrap;gap:7px}
+    .btn{border:0;border-radius:11px;padding:10px 12px;font-weight:850;cursor:pointer}
+    .btn.primary{background:var(--cyan);color:#041015}
+    .btn.secondary{background:var(--surface3);color:var(--text)}
+    .btn.danger{background:var(--redSoft);color:#fecdd3;border:1px solid rgba(251,113,133,.3)}
+    dialog{
+      width:min(92vw,520px);border:1px solid var(--line);border-radius:18px;padding:0;background:var(--surface);color:var(--text);
+      box-shadow:0 30px 90px rgba(0,0,0,.6)
+    }
+    dialog::backdrop{background:rgba(2,8,23,.72)}
+    .modal{padding:16px}
+    .modal h3{margin:0 0 12px}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .field{margin-bottom:8px}
+    .toast{
+      position:fixed;left:50%;bottom:88px;transform:translateX(-50%) translateY(12px);
+      opacity:0;pointer-events:none;background:#e2e8f0;color:#08111f;padding:9px 13px;border-radius:11px;
+      font-weight:850;font-size:.75rem;transition:.2s;z-index:50
+    }
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    .empty{padding:24px;text-align:center;color:var(--muted)}
+    .insight{
+      padding:11px;border-radius:14px;background:linear-gradient(135deg,rgba(34,211,238,.09),rgba(167,139,250,.09));
+      border:1px solid rgba(34,211,238,.12);font-size:.76rem;line-height:1.5
+    }
+    @media(max-width:640px){
+      .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .kpi-grid{grid-template-columns:repeat(2,1fr)}
+      .hour-grid{grid-template-columns:repeat(8,1fr)}
+    }
+  </style>
+</head>
+<body>
+<main class="app">
+  <section id="todayPage" class="page active">
+    <div class="top">
+      <div class="brand">
+        <div class="logo">P</div>
+        <div><h1>Pulse</h1><small>נתונים קטנים. תמונה גדולה.</small></div>
+      </div>
+      <div class="clock"><strong id="liveTime">--:--</strong><span id="liveDate"></span></div>
+    </div>
+
+    <div class="date-strip">
+      <button class="icon-btn" id="nextDay">‹</button>
+      <div>
+        <div class="date-main" id="selectedDateLabel"></div>
+        <div class="date-sub" id="selectedDateSub">כל לחיצה נשמרת עם תאריך ושעה</div>
+      </div>
+      <button class="icon-btn" id="prevDay">›</button>
+    </div>
+
+    <div class="section-head"><h2>טובים</h2><span>חיזוק עקביות</span></div>
+    <div class="grid" id="goodGrid"></div>
+
+    <div class="section-head"><h2>פחות טובים</h2><span>מודעות לפני שינוי</span></div>
+    <div class="grid" id="badGrid"></div>
+
+    <div class="section-head"><h2>רגשי</h2><span>מגמות לאורך זמן</span></div>
+    <div class="grid" id="moodGrid"></div>
+  </section>
+
+  <section id="statsPage" class="page">
+    <div class="top">
+      <div class="brand"><div class="logo">↗</div><div><h1>סטטיסטיקה</h1><small>תמונה מצטברת, לא צילום רגעי</small></div></div>
+    </div>
+
+    <div class="panel controls">
+      <div><label>טווח זמן</label>
+        <select id="periodSelect">
+          <option value="7">7 ימים</option>
+          <option value="30" selected>30 ימים</option>
+          <option value="90">90 ימים</option>
+          <option value="365">שנה</option>
+          <option value="all">כל התקופה</option>
+        </select>
+      </div>
+      <div><label>הרגל</label><select id="habitSelect"><option value="all">כל ההרגלים</option></select></div>
+    </div>
+
+    <div class="panel"><div class="kpi-grid" id="kpiGrid"></div></div>
+
+    <div class="panel">
+      <div class="chart-title"><h3>מגמה לאורך זמן</h3><span id="trendCaption"></span></div>
+      <div class="trend-chart" id="trendChart"></div>
+    </div>
+
+    <div class="panel">
+      <div class="chart-title"><h3>פיזור לפי שעה ביום</h3><span id="peakHour"></span></div>
+      <div class="hour-grid" id="hourGrid"></div>
+    </div>
+
+    <div class="panel">
+      <div class="chart-title"><h3>תובנה</h3><span>מבוסס על הנתונים שנצברו</span></div>
+      <div class="insight" id="insightBox"></div>
+    </div>
+
+    <div class="panel">
+      <div class="chart-title"><h3>פירוט הרגלים</h3><span>סכום וממוצע</span></div>
+      <div class="list" id="statsList"></div>
+    </div>
+  </section>
+
+  <section id="settingsPage" class="page">
+    <div class="top"><div class="brand"><div class="logo">⚙</div><div><h1>ניהול</h1><small>הרגלים, יעדים וגיבוי</small></div></div></div>
+    <div class="panel">
+      <div class="btn-row">
+        <button class="btn primary" id="addHabitBtn">＋ הוסף הרגל</button>
+        <button class="btn secondary" id="exportBtn">ייצוא גיבוי</button>
+        <button class="btn secondary" id="importBtn">ייבוא גיבוי</button>
+        <input type="file" id="importFile" accept="application/json" hidden>
+      </div>
+    </div>
+    <div class="panel"><div class="list" id="settingsList"></div></div>
+    <div class="panel"><button class="btn danger" id="resetBtn">מחיקת כל הנתונים</button></div>
+  </section>
+</main>
+
+<nav class="bottom-nav"><div class="bottom-inner">
+  <button class="nav-btn active" data-page="todayPage">הזנה</button>
+  <button class="nav-btn" data-page="statsPage">סטטיסטיקה</button>
+  <button class="nav-btn" data-page="settingsPage">ניהול</button>
+</div></nav>
+
+<dialog id="habitDialog">
+<form method="dialog" class="modal" id="habitForm">
+  <h3 id="dialogTitle">הוסף הרגל</h3>
+  <input type="hidden" id="editId">
+  <div class="form-grid">
+    <div class="field"><label>שם</label><input id="habitName" required maxlength="30"></div>
+    <div class="field"><label>אימוג׳י</label><input id="habitEmoji" maxlength="4" placeholder="⭐"></div>
+  </div>
+  <div class="form-grid">
+    <div class="field"><label>קטגוריה</label><select id="habitCategory">
+      <option value="good">טוב</option><option value="bad">פחות טוב</option><option value="mood">רגשי</option>
+    </select></div>
+    <div class="field"><label>סוג</label><select id="habitType">
+      <option value="counter">מונה</option><option value="boolean">בוצע / לא בוצע</option>
+      <option value="sleep">מעל / מתחת ל־6 שעות</option><option value="mood">מצב רוח 1–5</option>
+    </select></div>
+  </div>
+  <div class="form-grid">
+    <div class="field"><label>כמות בכל לחיצה</label><input id="habitStep" type="number" min="0.01" step="0.01" value="1"></div>
+    <div class="field"><label>יחידה</label><input id="habitUnit" maxlength="15" placeholder="מ״ל / פעמים"></div>
+  </div>
+  <div class="form-grid">
+    <div class="field"><label>יעד יומי</label><input id="habitGoal" type="number" min="0" step="0.01"></div>
+    <div class="field"><label>כיוון היעד</label><select id="goalDirection"><option value="min">לפחות</option><option value="max">לכל היותר</option></select></div>
+  </div>
+  <div class="btn-row" style="margin-top:10px">
+    <button class="btn primary" value="save">שמור</button><button class="btn secondary" value="cancel">ביטול</button>
+  </div>
+</form>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const KEY = "pulse_habit_tracker_v4";
+  const MIGRATION_KEYS = ["max_habit_tracker_v1","max_habit_tracker_v2","max_habit_tracker_v3"];
+  const DEFAULT_HABITS = [
+    {id:"water",name:"מים",emoji:"💧",category:"good",type:"counter",step:250,unit:"מ״ל",goal:2000,goalDirection:"min"},
+    {id:"soda",name:"סודה",emoji:"🫧",category:"good",type:"counter",step:250,unit:"מ״ל",goal:null,goalDirection:"min"},
+    {id:"fitness",name:"כושר",emoji:"🏋️",category:"good",type:"boolean",step:1,unit:"",goal:1,goalDirection:"min"},
+    {id:"sleep",name:"שינה",emoji:"😴",category:"good",type:"sleep",step:1,unit:"",goal:null,goalDirection:"min"},
+    {id:"breakfast",name:"ארוחת בוקר",emoji:"🍳",category:"good",type:"boolean",step:1,unit:"",goal:1,goalDirection:"min"},
+    {id:"lunch",name:"ארוחת צהריים",emoji:"🍽️",category:"good",type:"boolean",step:1,unit:"",goal:1,goalDirection:"min"},
+    {id:"dinner",name:"ארוחת ערב",emoji:"🥗",category:"good",type:"boolean",step:1,unit:"",goal:1,goalDirection:"min"},
+    {id:"reading",name:"קריאה",emoji:"📖",category:"good",type:"boolean",step:1,unit:"",goal:1,goalDirection:"min"},
+    {id:"studies",name:"לימודים",emoji:"🎓",category:"good",type:"boolean",step:1,unit:"",goal:1,goalDirection:"min"},
+    {id:"teeth",name:"צחצוח שיניים",emoji:"🪥",category:"good",type:"counter",step:1,unit:"פעמים",goal:2,goalDirection:"min"},
+    {id:"joint",name:"ג׳וינט",emoji:"🌿",category:"bad",type:"counter",step:1,unit:"",goal:null,goalDirection:"max"},
+    {id:"cigarette",name:"סיגריה",emoji:"🚬",category:"bad",type:"counter",step:1,unit:"",goal:null,goalDirection:"max"},
+    {id:"coffee",name:"קפה",emoji:"☕",category:"bad",type:"counter",step:1,unit:"",goal:3,goalDirection:"max"},
+    {id:"masturbation",name:"שפשוף",emoji:"😉",category:"bad",type:"counter",step:1,unit:"",goal:null,goalDirection:"max"},
+    {id:"munch",name:"מאנצ׳",emoji:"🍿",category:"bad",type:"counter",step:1,unit:"",goal:null,goalDirection:"max"},
+    {id:"alcohol",name:"אלכוהול",emoji:"🍺",category:"bad",type:"counter",step:1,unit:"משקאות",goal:null,goalDirection:"max"},
+    {id:"sweetdrink",name:"משקה ממותק",emoji:"🥤",category:"bad",type:"counter",step:1,unit:"",goal:null,goalDirection:"max"},
+    {id:"junk",name:"ג׳אנק",emoji:"🍔",category:"bad",type:"counter",step:1,unit:"ארוחות",goal:null,goalDirection:"max"},
+    {id:"takeaway",name:"הזמנת אוכל בחוץ",emoji:"🛵",category:"bad",type:"counter",step:1,unit:"הזמנות",goal:null,goalDirection:"max"},
+    {id:"mood",name:"מצב רוח",emoji:"🙂",category:"mood",type:"mood",step:1,unit:"",goal:null,goalDirection:"min"},
+    {id:"rage",name:"התפרצות זעם",emoji:"😡",category:"mood",type:"counter",step:1,unit:"",goal:null,goalDirection:"max"}
+  ];
+
+  const $ = s => document.querySelector(s);
+  const $$ = s => [...document.querySelectorAll(s)];
+  let state = loadState();
+  let selectedDate = dateKey(new Date());
+
+  function clone(v){ return JSON.parse(JSON.stringify(v)); }
+  function dateKey(d){ return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-"); }
+  function dateFromKey(k){ const [y,m,d]=k.split("-").map(Number); return new Date(y,m-1,d); }
+  function nowIso(){ return new Date().toISOString(); }
+  function loadState(){
+    try{
+      const saved=JSON.parse(localStorage.getItem(KEY));
+      if(saved?.habits && saved?.events) return saved;
+    }catch(e){}
+    const fresh={habits:clone(DEFAULT_HABITS),events:[],daily:{},createdAt:nowIso()};
+    for(const k of MIGRATION_KEYS){
+      try{
+        const old=JSON.parse(localStorage.getItem(k));
+        if(old?.habits) fresh.habits=old.habits;
+        if(old?.entries){
+          fresh.daily=old.entries;
+          Object.entries(old.entries).forEach(([day,vals])=>{
+            Object.entries(vals).forEach(([habitId,value])=>{
+              const h=fresh.habits.find(x=>x.id===habitId);
+              if(!h) return;
+              if(h.type==="counter" && Number(value)>0){
+                fresh.events.push({id:crypto.randomUUID?.()||String(Math.random()),habitId,ts:`${day}T12:00:00`,delta:Number(value),legacy:true});
+              }
+            });
+          });
+        }
+        break;
+      }catch(e){}
+    }
+    localStorage.setItem(KEY,JSON.stringify(fresh)); return fresh;
+  }
+  function save(){ localStorage.setItem(KEY,JSON.stringify(state)); }
+  function dayValue(habitId, day=selectedDate){
+    const h=state.habits.find(x=>x.id===habitId);
+    if(!h) return null;
+    if(h.type==="counter"){
+      return state.events.filter(e=>e.habitId===habitId && e.ts.slice(0,10)===day).reduce((s,e)=>s+Number(e.delta||0),0);
+    }
+    return state.daily?.[day]?.[habitId] ?? null;
+  }
+  function addEvent(h,delta){
+    const ts = selectedDate===dateKey(new Date()) ? new Date() : new Date(selectedDate+"T12:00:00");
+    state.events.push({id:crypto.randomUUID?.()||String(Date.now()+Math.random()),habitId:h.id,ts:ts.toISOString(),delta:Number(delta)});
+    save(); renderAll(); toast("נשמר עם שעה");
+  }
+  function removeEvent(h){
+    const idx=[...state.events].reverse().findIndex(e=>e.habitId===h.id && e.ts.slice(0,10)===selectedDate && Number(e.delta)>0);
+    if(idx<0) return;
+    const real=state.events.length-1-idx; state.events.splice(real,1); save(); renderAll();
+  }
+  function setDaily(id,val){
+    state.daily[selectedDate] ||= {};
+    if(val===null || val===false || val==="") delete state.daily[selectedDate][id];
+    else state.daily[selectedDate][id]=val;
+    if(Object.keys(state.daily[selectedDate]).length===0) delete state.daily[selectedDate];
+    save(); renderAll();
+  }
+  function fmt(n){ return Number.isInteger(Number(n))?String(n):Number(n).toFixed(2).replace(/\.?0+$/,""); }
+  function display(h,v){
+    if(h.type==="boolean") return v?"בוצע":"לא בוצע";
+    if(h.type==="sleep") return v==="over"?"מעל 6":"מתחת ל־6";
+    if(h.type==="mood") return v?`${v}/5`:"—";
+    if((h.id==="water"||h.id==="soda") && Number(v)>=1000) return `${fmt(Number(v)/1000)} ל׳`;
+    return `${fmt(v||0)}${h.unit?" "+h.unit:""}`;
+  }
+  function progress(h,v){
+    if(!h.goal) return null;
+    return Math.min(100,Math.max(0,(Number(v||0)/Number(h.goal))*100));
+  }
+  function escapeHtml(s){ return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c])); }
+  function toast(msg){ const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove("show"),1400); }
+
+  function habitCard(h){
+    const v=dayValue(h.id), el=document.createElement("article");
+    el.className=`habit ${h.category}`;
+    el.innerHTML=`<div class="habit-top"><div class="habit-name">${escapeHtml(h.name)}</div><div class="emoji">${escapeHtml(h.emoji||"⭐")}</div></div>
+      <div class="metric">${display(h,v)}</div><div class="sub">${h.goal?`יעד ${h.goalDirection==="max"?"עד ":""}${fmt(h.goal)} ${escapeHtml(h.unit||"")}`:"נבנה לאורך זמן"}</div>`;
+    if(h.type==="counter"){
+      el.innerHTML+=`<div class="actions"><button class="minus">−</button><button class="main-action">＋ ${h.step!==1?fmt(h.step)+" "+escapeHtml(h.unit||""):"הוסף"}</button></div>`;
+      el.querySelector(".main-action").onclick=()=>addEvent(h,h.step||1);
+      el.querySelector(".minus").onclick=()=>removeEvent(h);
+    }else if(h.type==="boolean"){
+      el.innerHTML+=`<button class="boolean-btn ${v?"done":""}">${v?"✓ בוצע":"סמן כבוצע"}</button>`;
+      el.querySelector(".boolean-btn").onclick=()=>setDaily(h.id,!v);
+    }else if(h.type==="sleep"){
+      el.innerHTML+=`<div class="split"><button data-v="under" class="${v==="under"?"active":""}">מתחת</button><button data-v="over" class="${v==="over"?"active":""}">מעל</button></div>`;
+      el.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>setDaily(h.id,b.dataset.v));
+    }else{
+      el.innerHTML+=`<div class="mood-scale">${[1,2,3,4,5].map((n,i)=>`<button data-v="${n}" class="${Number(v)===n?"active":""}">${["😞","😕","😐","🙂","😁"][i]}</button>`).join("")}</div>`;
+      el.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>setDaily(h.id,Number(b.dataset.v)));
+    }
+    const p=progress(h,v);
+    if(p!==null){ const pr=document.createElement("div");pr.className="progress";pr.innerHTML=`<i style="width:${p}%"></i>`;el.appendChild(pr); }
+    return el;
+  }
+
+  function renderToday(){
+    const d=dateFromKey(selectedDate);
+    $("#selectedDateLabel").textContent=new Intl.DateTimeFormat("he-IL",{weekday:"long",day:"numeric",month:"long",year:"numeric"}).format(d);
+    const isToday=selectedDate===dateKey(new Date());
+    $("#selectedDateSub").textContent=isToday?"כל לחיצה נשמרת עם תאריך ושעה":"נתוני עבר נשמרים בשעה 12:00";
+    const grids={good:$("#goodGrid"),bad:$("#badGrid"),mood:$("#moodGrid")};Object.values(grids).forEach(g=>g.innerHTML="");
+    state.habits.forEach(h=>grids[h.category]?.appendChild(habitCard(h)));
+    const add=document.createElement("button");add.className="habit add-card";add.textContent="＋ אחר / הוסף הרגל";add.onclick=()=>openDialog();$("#moodGrid").appendChild(add);
+  }
+
+  function periodStart(){
+    const val=$("#periodSelect").value, now=new Date();
+    if(val==="all"){
+      const allDates=[...state.events.map(e=>e.ts.slice(0,10)),...Object.keys(state.daily||{})].sort();
+      return allDates.length?dateFromKey(allDates[0]):new Date(now.getFullYear(),now.getMonth(),now.getDate()-29);
+    }
+    const d=new Date(now);d.setDate(d.getDate()-Number(val)+1);d.setHours(0,0,0,0);return d;
+  }
+  function filteredEvents(habitId=null){
+    const start=periodStart();
+    return state.events.filter(e=>new Date(e.ts)>=start && (!habitId||habitId==="all"||e.habitId===habitId));
+  }
+  function allDays(){
+    const start=periodStart(), end=new Date(), arr=[];const d=new Date(start);
+    while(d<=end){arr.push(dateKey(d));d.setDate(d.getDate()+1);}return arr;
+  }
+  function aggregate(h,days){
+    if(h.type==="counter") return filteredEvents(h.id).reduce((s,e)=>s+Number(e.delta||0),0);
+    const vals=days.map(day=>state.daily?.[day]?.[h.id]).filter(v=>v!==undefined && v!==null);
+    if(h.type==="boolean") return vals.filter(Boolean).length;
+    if(h.type==="sleep") return vals.filter(v=>v==="over").length;
+    if(h.type==="mood") return vals.length?vals.reduce((s,v)=>s+Number(v),0)/vals.length:0;
+    return 0;
+  }
+  function renderStats(){
+    const days=allDays(), selected=$("#habitSelect").value;
+    const habits=selected==="all"?state.habits:state.habits.filter(h=>h.id===selected);
+    const events=filteredEvents(selected);
+    const activeDays=new Set([...events.map(e=>e.ts.slice(0,10)),...days.filter(d=>state.daily?.[d]&&Object.keys(state.daily[d]).length)]).size;
+    const selectedHabit=state.habits.find(h=>h.id===selected);
+    const total=selected==="all"?events.reduce((s,e)=>s+Number(e.delta||0),0):(selectedHabit?aggregate(selectedHabit,days):0);
+    const avg=days.length?total/days.length:0;
+    const peak=peakHour(events);
+    $("#kpiGrid").innerHTML=`
+      <div class="kpi"><span>סה״כ</span><b>${fmt(total)}</b></div>
+      <div class="kpi"><span>ממוצע יומי</span><b>${fmt(avg)}</b></div>
+      <div class="kpi"><span>ימים עם נתונים</span><b>${activeDays}</b></div>
+      <div class="kpi"><span>שעת שיא</span><b>${peak===null?"—":String(peak).padStart(2,"0")+":00"}</b></div>`;
+    renderTrend(days, selected);
+    renderHours(events);
+    renderInsight(days, selected, peak);
+    $("#statsList").innerHTML=habits.map(h=>{
+      const val=aggregate(h,days), per=days.length?val/days.length:0;
+      return `<div class="list-row"><div style="font-size:1.2rem">${escapeHtml(h.emoji||"")}</div><div class="grow"><b>${escapeHtml(h.name)}</b><small>ממוצע יומי ${fmt(per)}</small></div><span class="pill">${fmt(val)} ${escapeHtml(h.unit||"")}</span></div>`;
+    }).join("")||'<div class="empty">אין נתונים</div>';
+  }
+  function renderTrend(days, selected){
+    const values=days.map(day=>{
+      if(selected==="all"){
+        return state.events.filter(e=>e.ts.slice(0,10)===day).reduce((s,e)=>s+Number(e.delta||0),0);
+      }
+      const h=state.habits.find(x=>x.id===selected); return h?Number(dayValueFor(h,day)||0):0;
+    });
+    const max=Math.max(1,...values), chart=$("#trendChart");
+    const maxBars=40, step=Math.max(1,Math.ceil(days.length/maxBars));
+    const bars=[];
+    for(let i=0;i<days.length;i+=step){
+      const slice=values.slice(i,i+step), sum=slice.reduce((a,b)=>a+b,0), label=days[i].slice(5);
+      bars.push({sum,label});
+    }
+    chart.innerHTML=bars.map(b=>`<div class="trend-col"><div class="trend-bar" style="height:${Math.max(2,(b.sum/max)*130)}px"></div><div class="trend-label">${b.label}</div></div>`).join("");
+    $("#trendCaption").textContent=`${days.length} ימים`;
+  }
+  function dayValueFor(h,day){
+    if(h.type==="counter") return state.events.filter(e=>e.habitId===h.id&&e.ts.slice(0,10)===day).reduce((s,e)=>s+Number(e.delta||0),0);
+    const v=state.daily?.[day]?.[h.id];
+    if(h.type==="boolean") return v?1:0;
+    if(h.type==="sleep") return v==="over"?1:0;
+    if(h.type==="mood") return Number(v||0);
+    return 0;
+  }
+  function peakHour(events){
+    if(!events.length) return null;
+    const sums=Array(24).fill(0);events.filter(e=>!e.legacy).forEach(e=>sums[new Date(e.ts).getHours()]+=Number(e.delta||0));
+    const max=Math.max(...sums);return max>0?sums.indexOf(max):null;
+  }
+  function renderHours(events){
+    const sums=Array(24).fill(0);events.filter(e=>!e.legacy).forEach(e=>sums[new Date(e.ts).getHours()]+=Number(e.delta||0));
+    const max=Math.max(1,...sums), peak=peakHour(events);$("#peakHour").textContent=peak===null?"אין עדיין מספיק נתונים":`שיא ב־${String(peak).padStart(2,"0")}:00`;
+    $("#hourGrid").innerHTML=sums.map((v,h)=>`<div class="hour-cell"><i style="height:${(v/max)*100}%"></i><span>${String(h).padStart(2,"0")}</span></div>`).join("");
+  }
+  function renderInsight(days, selected, peak){
+    const h=state.habits.find(x=>x.id===selected);
+    if(selected==="all"){ $("#insightBox").textContent="ככל שתמשיך להזין נתונים, כאן יופיעו דפוסים בין ימים, שעות והרגלים. כרגע מוצגת תמונת הצטברות כללית."; return; }
+    const first=Math.floor(days.length/2), a=days.slice(0,first).reduce((s,d)=>s+Number(dayValueFor(h,d)||0),0), b=days.slice(first).reduce((s,d)=>s+Number(dayValueFor(h,d)||0),0);
+    let trend="יציב יחסית";
+    if(b>a*1.15) trend="במגמת עלייה";
+    else if(b<a*.85) trend="במגמת ירידה";
+    const hourText=peak===null?"עדיין אין מספיק חותמות שעה":"שעת השיא היא "+String(peak).padStart(2,"0")+":00";
+    $("#insightBox").textContent=`${h.name} נמצא ${trend} בחצי השני של התקופה. ${hourText}. ככל שיצטברו יותר ימים, התמונה תהיה אמינה יותר.`;
+  }
+
+  function renderHabitSelect(){
+    const s=$("#habitSelect"),cur=s.value;s.innerHTML='<option value="all">כל ההרגלים</option>'+state.habits.map(h=>`<option value="${h.id}">${escapeHtml(h.name)}</option>`).join("");
+    if([...s.options].some(o=>o.value===cur))s.value=cur;
+  }
+  function renderSettings(){
+    $("#settingsList").innerHTML=state.habits.map(h=>`<div class="list-row"><div style="font-size:1.2rem">${escapeHtml(h.emoji||"")}</div><div class="grow"><b>${escapeHtml(h.name)}</b><small>${h.category==="good"?"טוב":h.category==="bad"?"פחות טוב":"רגשי"} · ${h.type}</small></div><button class="btn secondary" data-edit="${h.id}">ערוך</button><button class="btn danger" data-delete="${h.id}">מחק</button></div>`).join("");
+    $$("[data-edit]").forEach(b=>b.onclick=()=>openDialog(b.dataset.edit));
+    $$("[data-delete]").forEach(b=>b.onclick=()=>{if(confirm("למחוק את ההרגל?")){state.habits=state.habits.filter(h=>h.id!==b.dataset.delete);save();renderAll();}});
+  }
+  function renderAll(){ renderToday();renderHabitSelect();renderSettings();renderStats(); }
+
+  function openDialog(id=null){
+    const h=state.habits.find(x=>x.id===id);$("#dialogTitle").textContent=h?"עריכת הרגל":"הוסף הרגל";
+    $("#editId").value=h?.id||"";$("#habitName").value=h?.name||"";$("#habitEmoji").value=h?.emoji||"⭐";
+    $("#habitCategory").value=h?.category||"good";$("#habitType").value=h?.type||"counter";
+    $("#habitStep").value=h?.step||1;$("#habitUnit").value=h?.unit||"";$("#habitGoal").value=h?.goal??"";$("#goalDirection").value=h?.goalDirection||"min";
+    $("#habitDialog").showModal();
+  }
+  $("#habitForm").addEventListener("submit",e=>{
+    if(e.submitter?.value!=="save")return;
+    const id=$("#editId").value||"h_"+Date.now();
+    const h={id,name:$("#habitName").value.trim(),emoji:$("#habitEmoji").value.trim()||"⭐",category:$("#habitCategory").value,type:$("#habitType").value,step:Number($("#habitStep").value||1),unit:$("#habitUnit").value.trim(),goal:$("#habitGoal").value===""?null:Number($("#habitGoal").value),goalDirection:$("#goalDirection").value};
+    if(!h.name){e.preventDefault();return;}
+    const i=state.habits.findIndex(x=>x.id===id);if(i>=0)state.habits[i]=h;else state.habits.push(h);save();renderAll();
+  });
+
+  $("#prevDay").onclick=()=>{const d=dateFromKey(selectedDate);d.setDate(d.getDate()-1);selectedDate=dateKey(d);renderToday();};
+  $("#nextDay").onclick=()=>{const d=dateFromKey(selectedDate);d.setDate(d.getDate()+1);const k=dateKey(d);if(k<=dateKey(new Date())){selectedDate=k;renderToday();}};
+  $("#periodSelect").onchange=renderStats;$("#habitSelect").onchange=renderStats;$("#addHabitBtn").onclick=()=>openDialog();
+  $$(".nav-btn").forEach(b=>b.onclick=()=>{$$(".nav-btn").forEach(x=>x.classList.toggle("active",x===b));$$(".page").forEach(p=>p.classList.toggle("active",p.id===b.dataset.page));if(b.dataset.page==="statsPage")renderStats();});
+  $("#exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`pulse-backup-${dateKey(new Date())}.json`;a.click();URL.revokeObjectURL(a.href);};
+  $("#importBtn").onclick=()=>$("#importFile").click();$("#importFile").onchange=async e=>{try{const d=JSON.parse(await e.target.files[0].text());if(!d.habits||!d.events)throw 0;if(confirm("להחליף את הנתונים הקיימים?")){state=d;save();renderAll();}}catch(err){alert("קובץ לא תקין");}e.target.value="";};
+  $("#resetBtn").onclick=()=>{if(confirm("למחוק הכול?")){state={habits:clone(DEFAULT_HABITS),events:[],daily:{},createdAt:nowIso()};save();renderAll();}};
+
+  function tick(){const d=new Date();$("#liveTime").textContent=d.toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"});$("#liveDate").textContent=d.toLocaleDateString("he-IL",{day:"numeric",month:"short",year:"numeric"});}
+  tick();setInterval(tick,1000);
+  if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js?v=4").catch(()=>{}));
+  renderAll();
+})();
+</script>
+</body>
+</html>
